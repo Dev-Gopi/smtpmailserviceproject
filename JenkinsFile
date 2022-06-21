@@ -1,62 +1,34 @@
-import java.io.File
-
-def getGitCommitHash(){
-    def result = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-    return result
-}
-
-def generateVersionTag(){
-    def pom = readMavenPom file: 'pom.xml'
-    def gitCommitHash = getGitCommitHash()
-    return gitCommitHash + "-" + (pom.version).replace(".RELEASE", "")
-}
-
-def STACK_NAME = "smtpmailserviceproject"
-def FILE_NAME = "template.yml"
-node('linux'){
-    def buildInfo
-    def appName
-    def versionTag
-    def s3_bucket
-    def jarfile_name
-    def buildVersion
-
-
-    stage('Checkout'){
-        deleteDir()
-        checkout scm
+pipeline {
+    agent any
+    tools{
+        maven 'maven_3_8_6'
     }
-
-    stage('initialize params'){
-        def pom = readMavenPom file: 'pom.xml'
-        appName = pom.name
-        appName = appName.toLowerCase()
-        versionTag = generateVersionTag().toLowerCase()
-        echo "AppName: ${appName}"
-        buildVersion = (pom.version).replace("-SNAPSHOT", "")
+    environment {
+        aws_credential = "AWS_Access"
+        region = "us-east-1"
     }
+    stages{
+        stage('checkout') {
+            steps {
+                script {
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Dev-Gopi/smtpmailserviceproject.git']]])
+                    commitId = sh (script: 'git rev-parse --short HEAD ${GIT_COMMIT}', returnStdout: true).trim()
+                }
+            }
 
-    stage('Maven Build'){
-        rtMaven.resolver releaseRepo: 'maven', snapshotRepo: 'maven', server: server
-        buildInfo = rtMaven.run pom: 'pom.xml', goals: 'clean install package'
-    }
-
-    stage('Push to s3 bucket') {
-        s3_bucket = "s3://mys3bucket993261"
-        jarfile_path = "target/smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
-        jarfile_name = "smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
-        echo "Pushing jar file to s3 bucket: ${jarfile_name}"
-        deployToS3 {
-            sh "aws s3 cp ./${jarfile_path} ${s3_bucket}/${jarfile_name}"
         }
-    }
-
-    stage("Create stack cloudformation"){
-        deployToDev {
-            def stackName = "${STACK_NAME}"
-            def templateFileLocation = "./template/template.yml"
-            echo "started stack deployment"
-            cfnDeploy(file:'${templateFileLocation}', stackName:'${stackName}', timeoutInMinutes:10, cftParamsFile:'dev')
+        stage("Maven build"){
+            steps {
+                // Run Maven on a Unix agent.
+                sh "mvn clean install package shade:shade"
+            }
+        }
+        stage("Upload"){
+            steps{
+                withAWS(region:"${region}", credentials:"${aws_credential}"){
+                    s3Upload(file:'smtpmailserviceproject.jar', bucket:'s3://mys3bucket993261', path:'target/smtpmailserviceproject.jar')
+                }
+            }
         }
     }
 }
