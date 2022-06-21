@@ -1,6 +1,3 @@
-// @Library('utils@master') _
-
-// import org.apache.commons.lang.RandomStringUtils
 import java.io.File
 
 def getGitCommitHash(){
@@ -41,7 +38,7 @@ node('linux'){
 
     stage('Maven Build'){
         rtMaven.resolver releaseRepo: 'maven', snapshotRepo: 'maven', server: server
-        buildInfo = rtMaven.run pom: 'pom.xml', goals: 'clean package'
+        buildInfo = rtMaven.run pom: 'pom.xml', goals: 'clean install package'
     }
 
 //     stage('Push to s3 bucket') {
