@@ -6,9 +6,6 @@ pipeline {
     environment {
         aws_credential = "AWS_Access"
         region = "us-east-1"
-        api_res_url = "https://${bucket}.s3.${region}.amazonaws.com/${TAG_NAME}/${api_imagename}-${TAG_NAME}.tar.gz"
-        auth_res_url = "https://${bucket}.s3.${region}.amazonaws.com/${TAG_NAME}/${auth_imagename}-${TAG_NAME}.tar.gz"
-        notify_text = "image upload to s3 <br>${api_imagename}: <${api_res_url}><br> ${auth_imagename}: <${auth_res_url}><br>tag by ${TAG_NAME}"
     }
     stages{
         stage('checkout') {
@@ -32,14 +29,6 @@ pipeline {
                     s3Upload(file:'smtpmailserviceproject.jar', bucket:'s3://mys3bucket993261', path:'target/smtpmailserviceproject.jar')
                 }
             }
-        // post {
-        //         success{
-        //             office365ConnectorSend message: "${notify_text}<br>commit id: ${commitId}", status:"Success Upload", webhookUrl:"${webHook_url}"
-        //         }
-        //         failure{
-        //             office365ConnectorSend message: "Fail build,<br> see (<${env.BUILD_URL}>)", status:"Fail Upload", webhookUrl:"${webHook_url}"
-        //         }
-        //     }
         }
     }
 }
