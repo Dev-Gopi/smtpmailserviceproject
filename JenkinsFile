@@ -41,22 +41,22 @@ node('linux'){
         buildInfo = rtMaven.run pom: 'pom.xml', goals: 'clean install package'
     }
 
-//     stage('Push to s3 bucket') {
-//         s3_bucket = "s3://mys3bucket993261"
-//         jarfile_path = "target/smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
-//         jarfile_name = "smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
-//         echo "Pushing jar file to s3 bucket: ${jarfile_name}"
-//         deployToS3 {
-//             sh "aws s3 cp ./${jarfile_path} ${s3_bucket}/${jarfile_name}"
-//         }
-//     }
+    stage('Push to s3 bucket') {
+        s3_bucket = "s3://mys3bucket993261"
+        jarfile_path = "target/smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
+        jarfile_name = "smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
+        echo "Pushing jar file to s3 bucket: ${jarfile_name}"
+        deployToS3 {
+            sh "aws s3 cp ./${jarfile_path} ${s3_bucket}/${jarfile_name}"
+        }
+    }
 
-//     stage("Create stack cloudformation"){
-//         deployToDev {
-//             def stackName = "${STACK_NAME}"
-//             def templateFileLocation = "./template/template.yml"
-//             echo "started stack deployment"
-//             cfnDeploy(file:'${templateFileLocation}', stackName:'${stackName}', timeoutInMinutes:10, cftParamsFile:'dev')
-//         }
-//     }
+    stage("Create stack cloudformation"){
+        deployToDev {
+            def stackName = "${STACK_NAME}"
+            def templateFileLocation = "./template/template.yml"
+            echo "started stack deployment"
+            cfnDeploy(file:'${templateFileLocation}', stackName:'${stackName}', timeoutInMinutes:10, cftParamsFile:'dev')
+        }
+    }
 }
