@@ -1,0 +1,5 @@
+org/example/MailApp.class
+org/example/mail/Response.class
+org/example/mail/Email.class
+org/example/mail/Request.class
+org/example/mail/Content.class
