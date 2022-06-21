@@ -23,12 +23,12 @@ pipeline {
                 sh "mvn clean install package shade:shade"
             }
         }
-        stage("Upload"){
-            steps{
-                withAWS(region:"${region}", credentials:"${aws_credential}"){
-                    s3Upload(file:'smtpmailserviceproject.jar', bucket:'s3://mys3bucket993261', path:'target/smtpmailserviceproject.jar')
-                }
-            }
-        }
+//         stage("Upload"){
+//             steps{
+//                 withAWS(region:"${region}", credentials:"${aws_credential}"){
+//                     s3Upload(file:'smtpmailserviceproject.jar', bucket:'s3://mys3bucket993261', path:'target/smtpmailserviceproject.jar')
+//                 }
+//             }
+//         }
     }
 }
