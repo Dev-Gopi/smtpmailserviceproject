@@ -1,4 +1,4 @@
-@Library('utils@master') _
+// @Library('utils@master') _
 
 import com.lmig.intl.cloud.jenkins.exception.BuildException
 import org.apache.commons.lang.RandomStringUtils
