@@ -1,0 +1,66 @@
+@Library('utils@master') _
+
+import com.lmig.intl.cloud.jenkins.exception.BuildException
+import org.apache.commons.lang.RandomStringUtils
+import java.io.File
+
+def getGitCommitHash(){
+    def result = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+    return result
+}
+
+def generateVersionTag(){
+    def pom = readMavenPom file: 'pom.xml'
+    def gitCommitHash = getGitCommitHash()
+    return gitCommitHash + "-" + (pom.version).replace(".RELEASE", "")
+}
+
+def STACK_NAME = "smtpmailserviceproject"
+def FILE_NAME = "template.yml"
+node('linux'){
+    def buildInfo
+    def appName
+    def versionTag
+    def s3_bucket
+    def jarfile_name
+    def buildVersion
+
+
+    stage('Checkout'){
+        deleteDir()
+        checkout scm
+    }
+
+    stage('initialize params'){
+        def pom = readMavenPom file: 'pom.xml'
+        appName = pom.name
+        appName = appName.toLowerCase()
+        versionTag = generateVersionTag().toLowerCase()
+        echo "AppName: ${appName}"
+        buildVersion = (pom.version).replace("-SNAPSHOT", "")
+    }
+
+    stage('Maven Build'){
+        rtMaven.resolver releaseRepo: 'maven', snapshotRepo: 'maven', server: server
+        buildInfo = rtMaven.run pom: 'pom.xml', goals: 'clean package'
+    }
+
+    stage('Push to s3 bucket') {
+        s3_bucket = "s3://mys3bucket993261"
+        jarfile_path = "target/smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
+        jarfile_name = "smtpmailserviceproject-${buildVersion}-SNAPSHOT.jar"
+        echo "Pushing jar file to s3 bucket: ${jarfile_name}"
+        deployToS3 {
+            sh "aws s3 cp ./${jarfile_path} ${s3_bucket}/${jarfile_name}"
+        }
+    }
+
+    stage("Create stack cloudformation"){
+        deployToDev {
+            def stackName = "${STACK_NAME}"
+            def templateFileLocation = "./template/template.yml"
+            echo "started stack deployment"
+            cfnDeploy(file:'${templateFileLocation}', stackName:'${stackName}', timeoutInMinutes:10, cftParamsFile:'dev')
+        }
+    }
+}
