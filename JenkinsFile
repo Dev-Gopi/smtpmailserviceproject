@@ -1,7 +1,6 @@
 // @Library('utils@master') _
 
-import com.lmig.intl.cloud.jenkins.exception.BuildException
-import org.apache.commons.lang.RandomStringUtils
+// import org.apache.commons.lang.RandomStringUtils
 import java.io.File
 
 def getGitCommitHash(){
