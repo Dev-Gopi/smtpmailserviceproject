@@ -12,10 +12,8 @@ pipeline {
             steps {
                 script {
                     checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Dev-Gopi/smtpmailserviceproject.git']]])
-                    commitId = sh (script: 'git rev-parse --short HEAD ${GIT_COMMIT}', returnStdout: true).trim()
                 }
             }
-
         }
         stage("Maven build"){
             steps {
